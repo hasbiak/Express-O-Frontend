@@ -81,13 +81,25 @@
               >
                 <b-card-text> Rp. {{ item.product_price }} </b-card-text>
 
-                <b-button href="#" variant="primary">Add to Cart</b-button>
-                <b-button href="#" variant="success">Update</b-button>
-                <b-button href="#" variant="danger">Delete</b-button>
+                <b-button variant="primary">Add to Cart</b-button>
+                <b-button variant="success" @click="setProduct(item)"
+                  >Update</b-button
+                >
+                <b-button
+                  variant="danger"
+                  @click="deleteProduct(item.product_id)"
+                  >Delete</b-button
+                >
               </b-card>
             </b-col>
-          </b-row></b-col
-        >
+          </b-row>
+          <b-pagination
+            v-model="currentPage"
+            :total-rows="rows"
+            :per-page="limit"
+            @change="handlePageChange"
+          ></b-pagination>
+        </b-col>
       </b-row>
     </b-container>
     <hr />
@@ -147,7 +159,14 @@ export default {
   },
   data() {
     return {
-      products: []
+      products: [],
+      alert: false,
+      isMsg: '',
+      product_id: '',
+      currentPage: 1,
+      totalRows: null,
+      limit: 12,
+      page: 1
     }
   },
   created() {
@@ -156,19 +175,80 @@ export default {
   methods: {
     getProduct() {
       axios
-        .get('http://localhost:3000/product?page=1&limit=8')
+        .get(
+          `${process.env.VUE_APP_URL}/product?page=${this.page}&limit=${this.limit}`
+        )
         .then(response => {
           console.log(response)
+          this.totalRows = response.data.pagination.totalData
           this.products = response.data.data
         })
         .catch(error => {
           console.log(error)
         })
+    },
+    postProduct() {
+      console.log(this.form)
+      axios
+        .post(`${process.env.VUE_APP_URL}/product`, this.form)
+        .then(response => {
+          console.log(response)
+          this.alert = true
+          this.isMsg = response.data.msg
+          this.getProduct()
+        })
+        .catch(error => {
+          console.log(error.response)
+        })
+    },
+    setProduct(data) {
+      console.log(data)
+      this.form = data
+      this.product_id = data.product_id
+    },
+    patchProduct() {
+      console.log(this.form)
+      axios
+        .patch(
+          `${process.env.VUE_APP_URL}/product/${this.product_id}`,
+          this.form
+        )
+        .then(response => {
+          console.log(response)
+          this.alert = true
+          this.isMsg = response.data.msg
+          this.getProduct()
+        })
+        .catch(error => {
+          console.log(error.response)
+        })
+    },
+    deleteProduct(product_id) {
+      console.log(product_id)
+      // axios
+      //   .delete(
+      //     `${process.env.VUE_APP_URL}/product/${product_id.product_id}`,
+      //     this.product_id
+      //   )
+      //   .then(response => {
+      //     console.log(response)
+      //   })
+      //   .catch(error => {
+      //     console.log(error.response)
+      //   })
+    },
+    handlePageChange(numberPage) {
+      console.log(numberPage)
+      this.page = numberPage
+      this.getProduct()
+    }
+  },
+  computed: {
+    rows() {
+      return this.totalRows
     }
   }
 }
 </script>
 
-<style>
-@import '../assets/css/style.css';
-</style>
+<style></style>
